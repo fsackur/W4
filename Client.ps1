@@ -9,7 +9,7 @@ function Prompt {
     } else {
         "Devices: [None selected]"
     }       
-    Write-Host -ForegroundColor DarkYellow $DeviceBanner
+    Write-Host -NoNewline -ForegroundColor DarkYellow $DeviceBanner
     
     $global:LASTEXITCODE = $realLASTEXITCODE
 
@@ -74,6 +74,15 @@ function Add-Device {
 
 
 
+Import-Module $PSScriptRoot\Templates.psm1 -Force
+
+
+
+
+#############DEMO CODE##################
+#From her onwards, it's test and demo code.
+#This will be worked up into unit tests.
+
 
 function ConvertFrom-Json2 {
     #This creates hashtables with minimum fuss; ConvertFom-Json creates PSCustomObject
@@ -88,50 +97,8 @@ function ConvertFrom-Json2 {
 }
 
 
+$ApiHeaders = Get-Something -DoNothing -SomeNumber 12
 
+$ActualParameters = ConvertFrom-Json2 $ApiHeaders.ScriptParameters
 
-function Get-Hostname {
-    #THis is a mock of a script template that you might run
-    [CmdletBinding()]
-    param(
-        [switch]$DoNothing,
-        
-        [int]$SomeNumber,
-
-        [string[]]$CapitalCities
-    )
-
-    begin {
-        $Stopwatch = [System.Diagnostics.Stopwatch]::startNew()
-    }
-
-
-    end {
-        $ApiHeaders = @{
-            AuthToken = 'deadbeefdeadbeef'
-            Devices = $Global:WHAM_DEVICES
-            ScriptName = $PSCmdlet.MyInvocation.MyCommand.Name
-            ScriptParameters = (ConvertTo-Json $PSBoundParameters -Depth 10 -Compress) -replace '{"IsPresent":true}', 'true'
-        }
-    
-        Write-Host -ForegroundColor Green `
-"Invoking rest method:
-https://wham.rax.io 
-PUT
-headers:
-$($ApiHeaders | Out-String)"
-        
-        $Stopwatch.Stop()
-        $Elapsed = $Stopwatch.Elapsed.ToString() -replace '00:' -replace '00\.', '0.'
-        Write-Host -ForegroundColor Gray "Command executed in $Elapsed seconds"
-
-        $ApiHeaders
-    }
-
-}
-
-$Api = Get-Hostname -DoNothing -SomeNumber 12
-
-$ActualParameters = ConvertFrom-Json2 $Api.ScriptParameters
-
-Get-Hostname @ActualParameters
+Get-Something @ActualParameters  #Should Not Throw
