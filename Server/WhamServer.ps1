@@ -1,54 +1,37 @@
 ﻿<#
-    This is a simple web server to serve a PAC file.
+    This is the simplest possible implementation of the Wham API.
 
     Typical use:
-    PacServer -PacFilePath 'C:\Proxy.Pac' -Binding 'http://127.0.0.1:8080'
+    .\WhamServer.ps1 -Binding 'http://127.0.0.1:80'
 
     Then observe the output:
-    Invoke-WebRequest "http://127.0.0.1:8080" | select -ExpandProperty RawContent
-    Invoke-WebRequest "http://127.0.0.1:8080/Proxy.pac" | select -ExpandProperty RawContent
-    Invoke-WebRequest "http://127.0.0.1:8080/end" | select -ExpandProperty RawContent
-
-    Warning: if set, the PAC file is called often in WIndows. If you will have a long PAC file, you should optimise for performance.
+    Invoke-WebRequest "http://127.0.0.1:80" | select -ExpandProperty RawContent
+    Invoke-WebRequest "http://127.0.0.1:80/end" | select -ExpandProperty RawContent
 
 #>
 [CmdletBinding()]
 [OutputType([void])]
 param (
-    [Parameter(Mandatory=$true, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, ValueFromRemainingArguments=$false, Position=0)]
-    [ValidateScript({Test-Path $_})]
-    [Alias("Path")]
-    [string]$PacFilePath,
-
-    [Parameter(Mandatory=$true, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, ValueFromRemainingArguments=$false, Position=1)]
+    [Parameter(Position=0)]
     [ValidateScript({return (
             $_.IsWellFormedOriginalString() -and
             $_.IsAbsoluteUri -and
             $_.Scheme -eq "http"   #no SSL config to worry about
     )})]
-    [uri]$Binding
+    [uri]$Binding = 'http://127.0.0.1:8080'
 )
 
-
-#Caution, scripters... sanitise URLs to stop use of \..\ to get out of the base dir
-$BaseDir = Split-Path $PacFilePath -Parent
-$PacFileName = Split-Path $PacFilePath -Leaf
-
-
-$PacQueryStem = '/' + $PacFileName
-
-$PacUrl = $Binding.AbsoluteUri + $PacFileName
 $KillUrl = $Binding.AbsoluteUri + 'end'
 
 $StartDate = [string](Get-Date)
 
-$Host.UI.RawUI.WindowTitle = "Proxy PAC file server"
-
+$Host.UI.RawUI.WindowTitle = "Wham test server"
 
 
 #intialise
 $Listener = New-Object System.Net.HttpListener
 $Listener.Prefixes.Add($Binding.AbsoluteUri)
+
 
 
 try {
@@ -61,8 +44,7 @@ try {
     }
 }
 
-Write-Host "Listening at $($Binding.AbsoluteUri)..."
-
+Write-Host "Listening at $($Binding.AbsoluteUri). To kill:  Invoke-WebRequest $KillUrl   ..."
 
 
 while ($Listener.IsListening) {
@@ -86,15 +68,15 @@ while ($Listener.IsListening) {
         }
 
 
-        $PacQueryStem {
+        '/invoke' {
             #Get-Content returns array of string; this joins into single multi-line string
-            $Content = (Get-Content $PacFilePath) -join "`n"
+            $Content = "Mock content"
             break
         }
 
 
         default {
-            $Content = "Pacman - serving up proxy auto-configuration scripts since $StartDate. Process ID: $PID`nFor PAC script, send GET to: $PacUrl`nTo terminate, send GET to: $KillUrl"
+            $Content = "WhamTester - serving up mock wham runs since $StartDate. Process ID: $PID`n`nTo terminate, send GET to: $KillUrl"
         }
     }
 
@@ -117,5 +99,10 @@ while ($Listener.IsListening) {
 
 }
 
-$Listener.Stop()
-$Listener.Dispose()
+try {
+    $Listener.Stop()
+} catch {
+
+} finally {
+    $Listener.Dispose()
+}
