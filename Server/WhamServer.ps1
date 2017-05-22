@@ -70,7 +70,7 @@ while ($Listener.IsListening) {
 
         '/invoke' {
             #Get-Content returns array of string; this joins into single multi-line string
-            $Content = "Mock content"
+            $Content = $Context.Request.Headers | Out-String
             break
         }
 
@@ -84,7 +84,6 @@ while ($Listener.IsListening) {
     #serve the content
     $Buffer = [System.Text.Encoding]::UTF8.GetBytes($Content)
     $Response.AddHeader("ContentType", "text/plain")
-    #$Response.AddHeader("ContentType", "application/x-ns-proxy-autoconfig")
     $Response.AddHeader("Accept-Ranges", "bytes")
     $Response.ContentLength64 = $Buffer.Length
     $Response.OutputStream.Write($Buffer, 0, $Buffer.Length)

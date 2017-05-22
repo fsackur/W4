@@ -93,7 +93,9 @@ function Invoke-WhamApi {
         ScriptParameters = (ConvertTo-Json $Parameters -Depth 10 -Compress) -replace '{"IsPresent":true}', 'true'
     }
 
-    #$Response = Invoke-RestMethod -Uri 'https://wham.rax.io' -Method GET -Headers $ApiHeaders
+    $Response = Invoke-RestMethod -Uri "$Url/Invoke" -Method GET -Headers $ApiHeaders
+    
+    <#
     Write-Host -ForegroundColor Green ((
         "Invoking rest method:",
         "`tUri     : https://wham.rax.io",
@@ -108,6 +110,9 @@ function Invoke-WhamApi {
     ) -join "`n")
 
     $ApiHeaders
+    #>
+
+    $Response
 }
 
 
@@ -116,6 +121,18 @@ function Invoke-WhamApi {
 #############DEMO CODE##################
 #From her onwards, it's test and demo code.
 #This will be worked up into unit tests.
+
+$Url = 'http://127.0.0.1:8081'
+
+function Start-WhamServer {
+    Start-Process powershell.exe -ArgumentList '-NoProfile', '-File', '.\Server\WhamServer.ps1', $Url
+}
+
+function Stop-WhamServer {
+    $null = Invoke-WebRequest "$Url/end"
+}
+
+
 
 
 function ConvertFrom-Json2 {
@@ -131,10 +148,6 @@ function ConvertFrom-Json2 {
 }
 
 
-$ApiHeaders = Get-Something -DoNothing -SomeNumber 12
+Get-Something -DoNothing -SomeNumber 12
 
-Start-Sleep -Milliseconds 700
 
-$ActualParameters = ConvertFrom-Json2 $ApiHeaders.ScriptParameters
-
-$null = Get-Something @ActualParameters  #Should Not Throw

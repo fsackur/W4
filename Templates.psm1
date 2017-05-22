@@ -38,6 +38,9 @@ function Get-Something {
 
 
     begin {
+        if (-not $GLobal:WHAM_DEVICES) {
+            
+        }
         #Execution metrics - client time
         $Stopwatch = [System.Diagnostics.Stopwatch]::startNew()
     }
@@ -49,9 +52,12 @@ function Get-Something {
             -Command $PSCmdlet.MyInvocation.MyCommand.Name `
             -Parameters $PSBoundParameters       
 
-        $Stopwatch.Stop()
-        $Elapsed = $Stopwatch.Elapsed.ToString() -replace '00:' -replace '00\.', '0.'
-        Write-Host -ForegroundColor Gray "Command executed in $Elapsed seconds"
+
+        if ($Stopwatch) {
+            $Stopwatch.Stop()
+            $Elapsed = $Stopwatch.Elapsed.ToString() -replace '00:' -replace '00\.', '0.'
+            Write-Host -ForegroundColor Gray "Command executed in $Elapsed seconds"
+        }
 
     }
 
