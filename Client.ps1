@@ -77,6 +77,40 @@ function Add-Device {
 Import-Module $PSScriptRoot\Templates.psm1 -Force
 
 
+function Invoke-WhamApi {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Command,
+
+        [hashtable]$Parameters = @{}
+    )
+
+    $ApiHeaders = @{
+        AuthToken = 'deadbeefdeadbeef'
+        Devices = $Global:WHAM_DEVICES
+        ScriptName = $Command
+        ScriptParameters = (ConvertTo-Json $Parameters -Depth 10 -Compress) -replace '{"IsPresent":true}', 'true'
+    }
+
+    #$Response = Invoke-RestMethod -Uri 'https://wham.rax.io' -Method GET -Headers $ApiHeaders
+    Write-Host -ForegroundColor Green ((
+        "Invoking rest method:",
+        "`tUri     : https://wham.rax.io",
+        "`tVerb    : GET",
+        "`theaders :",
+        ($ApiHeaders.GetEnumerator() | %{[string]::Format(
+            "`t`t{0,-18}: {1}",
+            $_.Key,
+            $_.Value
+            )} | Out-String
+        )
+    ) -join "`n")
+
+    $ApiHeaders
+}
+
+
 
 
 #############DEMO CODE##################
@@ -99,6 +133,8 @@ function ConvertFrom-Json2 {
 
 $ApiHeaders = Get-Something -DoNothing -SomeNumber 12
 
+Start-Sleep -Milliseconds 700
+
 $ActualParameters = ConvertFrom-Json2 $ApiHeaders.ScriptParameters
 
-Get-Something @ActualParameters  #Should Not Throw
+$null = Get-Something @ActualParameters  #Should Not Throw
