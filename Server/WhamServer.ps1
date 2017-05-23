@@ -18,7 +18,7 @@ param (
             $_.IsAbsoluteUri -and
             $_.Scheme -eq "http"   #no SSL config to worry about
     )})]
-    [uri]$Binding = 'http://127.0.0.1:8080'
+    [uri]$Binding = 'http://127.0.0.1:8081'
 )
 
 $KillUrl = $Binding.AbsoluteUri + 'end'
@@ -68,9 +68,9 @@ while ($Listener.IsListening) {
         }
 
 
-        '/invoke' {
+        '/Invoke' {
             #Get-Content returns array of string; this joins into single multi-line string
-            $Content = $Context.Request.Headers | Out-String
+            $Content = & $PSScriptRoot\WhamRunner.ps1 -Context $Context 
             break
         }
 
