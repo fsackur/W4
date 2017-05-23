@@ -88,7 +88,7 @@ function Invoke-WhamApi {
 
     $ApiHeaders = @{
         AuthToken = 'deadbeefdeadbeef'
-        Devices = $Global:WHAM_DEVICES
+        Devices = $Global:WHAM_DEVICES -join ','
         ScriptName = $Command
         ScriptParameters = (ConvertTo-Json $Parameters -Depth 10 -Compress) -replace '{"IsPresent":true}', 'true'
     }
@@ -122,7 +122,7 @@ function Invoke-WhamApi {
 #From her onwards, it's test and demo code.
 #This will be worked up into unit tests.
 
-$Url = 'http://127.0.0.1:8081'
+$Url = 'http://127.0.0.1:8082'
 
 function Start-WhamServer {
     Start-Process powershell.exe -ArgumentList '-NoProfile', '-File', '.\Server\WhamServer.ps1', $Url
@@ -148,6 +148,6 @@ function ConvertFrom-Json2 {
 }
 
 
-Get-Something -DoNothing -SomeNumber 12
+$W = Get-Something -DoNothing -SomeNumber 12
 
-
+$W
