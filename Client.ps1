@@ -1,5 +1,56 @@
-﻿
+﻿<#
+    .Synopsis
+    A sketch of an API client and server for running script from a library on a selection of remote computers
 
+
+#>
+#requires -Modules PowerShellGet
+
+#Required modules
+try {
+    Import-Module Indented.StubCommand -ErrorAction Stop
+} catch [System.IO.FileNotFoundException] {
+    Install-Module Indented.StubCommand -Scope CurrentUser -Repository PSGallery -Force
+} finally {
+    Import-Module Indented.StubCommand -ErrorAction Stop
+}
+
+
+
+#region Import script library and inject API calls in the function body
+$LibraryPath = 'C:\dev\W4\Templates'
+
+#This replaces the function body in all functions in the library
+$FunctionBody = {
+    if (-not $Global:WHAM_DEVICES) {
+        Write-Host -NoNewline -ForegroundColor Red "No devices selected. "
+        Write-Host -ForegroundColor DarkYellow "Use Add-Device or Set-Device to select servers for script execution."
+        return
+    }
+    #Execution metrics - client time
+    $Stopwatch = [System.Diagnostics.Stopwatch]::startNew()
+
+    Invoke-WhamApi `
+        -Command $PSCmdlet.MyInvocation.MyCommand.Name `
+        -Parameters $PSBoundParameters
+
+    if ($Stopwatch) {
+        $Stopwatch.Stop()
+        $Elapsed = $Stopwatch.Elapsed.ToString() -replace '00:' -replace '00\.', '0.'
+        Write-Host -ForegroundColor Gray "Command executed in $Elapsed seconds"
+    }
+}
+
+Get-ChildItem $LibraryPath -Filter '*.psm1' | select -First 10 | foreach {
+    Write-Verbose ("Stubbing " + $_.BaseName)
+    New-StubModule -FromModule $_.FullName -FunctionBody $FunctionBody | Out-String | Invoke-Expression
+}
+#endregion Import script library and inject API calls in the function body
+
+
+
+
+#Prompt shows currently-selected devices
 function Prompt {
     $realLASTEXITCODE = $LASTEXITCODE
     
@@ -39,6 +90,8 @@ Clear-Host
 Write-Host $Banner -ForegroundColor Gray
 
 
+
+
 #region Manipulate the current list of devices
 function Get-Device {
     param(
@@ -74,7 +127,6 @@ function Add-Device {
 
 
 
-Import-Module $PSScriptRoot\Templates.psm1 -Force
 
 
 function Invoke-WhamApi {
@@ -119,7 +171,7 @@ function Invoke-WhamApi {
 
 
 #############DEMO CODE##################
-#From her onwards, it's test and demo code.
+#From here onwards, it's test and demo code.
 #This will be worked up into unit tests.
 
 $Url = 'http://127.0.0.1:8082'
